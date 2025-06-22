@@ -111,7 +111,7 @@ class VectorStore {
       const queryEmbedding = await this.generateEmbedding(query);
       const { data, error } = await this.supabase.rpc("match_documents", {
         query_embedding: queryEmbedding,
-        match_threshhold: similarityThreshold,
+        match_threshold: similarityThreshold,
         match_count: topK,
       });
       if (error) {

@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Widget Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            font-size: 3rem;
+            margin: 0 0 10px 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .content {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .feature {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+        
+        .feature h3 {
+            margin: 0 0 10px 0;
+            color: #ffd700;
+        }
+        
+        .code-block {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .widget-demo-text {
+            position: fixed;
+            bottom: 100px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            max-width: 250px;
+            z-index: 999;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Chat Widget Demo</h1>
+            <p>Professional React TypeScript chat widget with real-time messaging</p>
+        </div>
+        
+        <div class="content">
+            <h2>✨ Features</h2>
+            <div class="feature">
+                <h3>🔒 Shadow DOM Isolation</h3>
+                <p>Complete style isolation ensures no conflicts with your existing website styles</p>
+            </div>
+            <div class="feature">
+                <h3>⚡ Real-time Messaging</h3>
+                <p>WebSocket-powered instant messaging with streaming responses</p>
+            </div>
+            <div class="feature">
+                <h3>🎨 Fully Customizable</h3>
+                <p>Themes, colors, positioning, and branding options</p>
+            </div>
+            <div class="feature">
+                <h3>📱 Responsive Design</h3>
+                <p>Works perfectly on desktop, tablet, and mobile devices</p>
+            </div>
+        </div>
+        
+        <div class="content">
+            <h2>🛠️ Implementation</h2>
+            <p>Add the widget to any website with just one script tag:</p>
+            <div class="code-block">
+&lt;!-- Add this to your HTML head --&gt;
+&lt;script src="./dist/chat-widget.iife.js"&gt;&lt;/script&gt;
+
+&lt;!-- Optional: Configure the widget --&gt;
+&lt;script&gt;
+  // Initialize with default settings
+  window.initChatWidget();
+  
+  // Or customize it
+  window.initChatWidget({
+    serverUrl: 'https://your-backend.com',
+    position: 'bottom-left',
+    theme: 'dark',
+    title: 'AI Assistant',
+    primaryColor: '#8B5CF6'
+  });
+&lt;/script&gt;
+            </div>
+        </div>
+        
+        <div class="content">
+            <h2>🎛️ Configuration Options</h2>
+            <div class="code-block">
+interface ChatWidgetOptions {
+  serverUrl?: string;           // Backend WebSocket URL
+  position?: 'bottom-left' | 'bottom-right';
+  theme?: 'light' | 'dark';     // Visual theme
+  title?: string;               // Widget title
+  primaryColor?: string;        // Brand color (hex)
+}
+            </div>
+            
+            <div class="buttons">
+                <button class="btn" onclick="switchTheme()">🌓 Toggle Theme</button>
+                <button class="btn" onclick="switchPosition()">📍 Switch Position</button>
+                <button class="btn" onclick="changeColor()">🎨 Change Color</button>
+                <button class="btn" onclick="resetWidget()">🔄 Reset Widget</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="widget-demo-text">
+        👈 Check out the chat widget in the bottom-left corner!
+    </div>
+
+    <script src="http://localhost:3000/chat-widget.iife.js"></script>
+    
+    <script>
+        // Initialize the chat widget
+        let chatWidget = window.initChatWidget({
+            serverUrl: 'http://localhost:3001',
+            position: 'bottom-left',
+            theme: 'light',
+            title: 'AI Assistant',
+            primaryColor: '#3B82F6'
+        });
+        
+        // Demo functions
+        let currentTheme = 'light';
+        let currentPosition = 'bottom-left';
+        let currentColor = '#3B82F6';
+        
+        function switchTheme() {
+            currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+            updateWidget();
+        }
+        
+        function switchPosition() {
+            currentPosition = currentPosition === 'bottom-left' ? 'bottom-right' : 'bottom-left';
+            updateWidget();
+        }
+        
+        function changeColor() {
+            const colors = ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#EC4899'];
+            const currentIndex = colors.indexOf(currentColor);
+            currentColor = colors[(currentIndex + 1) % colors.length];
+            updateWidget();
+        }
+        
+        function resetWidget() {
+            currentTheme = 'light';
+            currentPosition = 'bottom-left';
+            currentColor = '#3B82F6';
+            updateWidget();
+        }
+        
+        function updateWidget() {
+            // Destroy old widget
+            chatWidget.destroy();
+            
+            // Create new widget with updated options
+            chatWidget = window.initChatWidget({
+                serverUrl: 'http://localhost:3001',
+                position: currentPosition,
+                theme: currentTheme,
+                title: 'AI Assistant',
+                primaryColor: currentColor
+            });
+        }
+        
+        // Update demo text position based on widget position
+        function updateDemoText() {
+            const demoText = document.querySelector('.widget-demo-text');
+            if (currentPosition === 'bottom-right') {
+                demoText.style.left = 'auto';
+                demoText.style.right = '20px';
+                demoText.innerHTML = 'Check out the chat widget in the bottom-right corner! 👉';
+            } else {
+                demoText.style.left = '20px';
+                demoText.style.right = 'auto';
+                demoText.innerHTML = '👈 Check out the chat widget in the bottom-left corner!';
+            }
+        }
+        
+        // Update demo text when position changes
+        setInterval(updateDemoText, 100);
+    </script>
+</body>
+</html>
