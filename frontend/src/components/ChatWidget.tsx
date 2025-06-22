@@ -222,7 +222,7 @@ const ChatWidget: React.FC<ChatWidgetOptions> = ({
       {/* Chat Window */}
       {isOpen && (
         <div
-          className={`w-80 h-[32rem] rounded-lg shadow-2xl border ${currentTheme.border} ${currentTheme.bg} flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 duration-300`}
+          className={`w-100 h-100  rounded-lg shadow-2xl border ${currentTheme.border} ${currentTheme.bg} flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 duration-300`}
         >
           {/* Header */}
           <div

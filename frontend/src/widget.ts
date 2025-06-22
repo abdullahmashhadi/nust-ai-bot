@@ -96,6 +96,8 @@ class ChatWidgetManager {
     .w-16 { width: 4rem; }
     .h-16 { height: 4rem; }
     .w-96 { width: 24rem; }
+    .w-100 {width: 25rem;}
+    .h-100 {height: 600px;}
     .w-full { width: 100%; }
     
     /* Max width */
