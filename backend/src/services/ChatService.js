@@ -55,11 +55,7 @@ class ChatService {
     }
   }
 
-  async *wrapGeneratorWithSave(
-    generator,
-    conversation,
-    conversationId
-  ) {
+  async *wrapGeneratorWithSave(generator, conversation, conversationId) {
     let fullResponse = "";
 
     for await (const chunk of generator) {
@@ -70,7 +66,6 @@ class ChatService {
     conversation.push({ role: "assistant", content: fullResponse });
     this.conversations.set(conversationId, conversation);
     console.log(`Conversation updated for ID ${conversationId}:`, conversation);
-
   }
   buildSystemPrompt(context) {
     const basePrompt = `You are a helpful AI assistant for NUST website. You have access to NUST documentation and website content.
@@ -80,13 +75,33 @@ Use the following context to answer questions accurately and helpfully:
 CONTEXT:
 ${context}
 
-Guidelines:
+RESPONSE FORMATTING GUIDELINES:
+- Use **bold text** for important information and headings
+- Use *italic text* for emphasis
+- Create bulleted lists using • for better readability
+- Include relevant links in format: [Link Text](URL) when applicable
+- Use numbered lists for step-by-step instructions
+- Structure your response with clear sections when answering complex questions
+- For contact information, format as: **Phone:** +92-xxx-xxx-xxxx or **Email:** example@nust.edu.pk
+- For important dates/deadlines, format as: **Deadline:** Date
+- Use line breaks to separate different topics or sections
+
+CONTENT GUIDELINES:
 - Answer based on the provided context when possible
 - If you don't have specific information, say so clearly
 - Be concise but comprehensive
 - Maintain a professional, friendly tone
 - Students should get all required information
-- If asked about something not in the context, provide general helpful information`;
+- If asked about something not in the context, provide general helpful information
+- Always try to include relevant NUST website links when mentioning specific programs, departments, or services
+
+Example formatting:
+**Admission Requirements:**
+• Minimum 60% marks in intermediate
+• Valid entry test score
+• [Apply online here](https://nust.edu.pk/admissions)
+
+For more information, visit [NUST Official Website](https://nust.edu.pk)`;
 
     return basePrompt;
   }
