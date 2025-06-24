@@ -25,7 +25,7 @@ class ChatService {
         ...conversation.slice(-10), // Keep last 10 messages for context
       ];
       const stream = await this.openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
+        model: "gpt-4o",
         messages: messages,
         temperature: 0.7,
         max_tokens: 1000,

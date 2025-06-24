@@ -63,7 +63,6 @@ class DocumentService {
           const $ = cheerio.load(content);
           
           $("script, style, noscript, iframe, object, embed").remove();
-          $("nav, footer, header, .nav, .footer, .header").remove();
           $(".aspNetHidden, .hidden, [style*='display:none'], [style*='display: none']").remove();
 
           const title = $("title").text().trim();
@@ -188,7 +187,7 @@ class DocumentService {
         'Upgrade-Insecure-Requests': '1'
       });
 
-      while (urlsToVisit.length > 0 && allDocuments.length < maxPages) {
+      while (urlsToVisit.length > 0 && Array.from(visitedUrls).length < maxPages) {
         const currentUrl = urlsToVisit.shift();
         if (visitedUrls.has(currentUrl)) continue;
         visitedUrls.add(currentUrl);
@@ -248,10 +247,10 @@ class DocumentService {
           const links = await page.evaluate(() => {
             const anchors = Array.from(document.querySelectorAll('a[href]'));
             return anchors.map(a => a.href).filter(href => 
-              href && !href.startsWith('#') && !href.startsWith('javascript:')
+              href && !href.startsWith('#') && !href.startsWith('javascript:') && !href.includes('#') && !href.includes('download') && !href.includes('mailto:')
             );
           });
-
+          // console.log("links found:", links);
           const baseUrl = new URL(currentUrl);
           for (const link of links) {
             try {
@@ -276,7 +275,6 @@ class DocumentService {
               // Skip invalid URLs
             }
           }
-
         } catch (error) {
           console.error(`Error scraping ${currentUrl} with Puppeteer:`, error.message);
         }

@@ -58,7 +58,6 @@ class VectorStore {
     for (const doc of documents) {
       try {
         const embedding = await this.generateEmbedding(doc.content);
-        console.log("embedding generated for document:", doc.content.substring(0, 50));
         const documentRecord = {
           content: doc.content,
           metadata: doc.metadata || {},

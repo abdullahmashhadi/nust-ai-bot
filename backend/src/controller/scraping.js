@@ -1,4 +1,5 @@
 
+const { startScraping } = require("../services/bgService");
 const { DocumentService } = require("../services/DocumentService");
 const { VectorStore } = require("../services/vectoreStore");
 const axios = require("axios");
@@ -6,16 +7,16 @@ const documentService = new DocumentService();
 
 const scrapWebsite = async (req, res, next) => {
   try {
-    const { url, maxPages = 15, usePuppeteer = true } = req.body;
+    const { url, maxPages = 500, usePuppeteer = true } = req.body;
       if (!url) {
         return res.status(400).json({ error: "URL is required" });
       }
-  
-      const result = await documentService.scrapeWebsite(url,maxPages, usePuppeteer);
-      res.status(200).json({
-        message: "Website scraped successfully",
-        chunks: result.length,
-        data: result,
+      startScraping(url, maxPages, usePuppeteer)
+     res.status(200).json({
+        message: "Website scraping started",
+        url,
+        maxPages,
+        usePuppeteer
       });
     } catch (error) {
       console.error("Website scraping error:", error);

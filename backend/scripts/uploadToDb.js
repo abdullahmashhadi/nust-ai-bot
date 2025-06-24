@@ -1,12 +1,12 @@
 const fs = require('fs');
 const { VectorStore } = require('../src/services/vectoreStore');
 const folder = "data"
-const files = ["net.json","admission.json","masters.json","international_students.json","clubs_societies.json","admission_policy.json"]
+const files = ["net.json","admission_1.json","masters.json","international_students.json","clubs_societies.json","admission_policy.json"]
 
 async function name() {
     try {
         
-        for (const file of files) {
+        for (const file of files.slice(0,2)) {
             const filePath = `${folder}/${file}`;
             if (!fs.existsSync(filePath)) {
                 console.error(`File not found: ${filePath}`);
@@ -26,9 +26,9 @@ async function name() {
     process.exit(0);
     
 }
-// name().then(() => {
-//     console.log("All embeddings uploaded successfully");
-// }).catch((error) => {
-//     console.error("Error in uploading embeddings:", error);
-//     process.exit(1);
-// });
+name().then(() => {
+    console.log("All embeddings uploaded successfully");
+}).catch((error) => {
+    console.error("Error in uploading embeddings:", error);
+    process.exit(1);
+});
