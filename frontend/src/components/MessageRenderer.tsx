@@ -9,8 +9,26 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({
   content,
   isUser = false,
 }) => {
+  // Function to detect if text contains Urdu/Arabic characters
+  const containsUrdu = (text: string) => {
+    const urduRegex = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]/;
+    return urduRegex.test(text);
+  };
+
+  const hasUrduContent = containsUrdu(content);
+
   if (isUser) {
-    return <div className="whitespace-pre-wrap">{content}</div>;
+    return (
+      <div 
+        className={`whitespace-pre-wrap ${hasUrduContent ? 'text-right' : ''}`}
+        style={{ 
+          fontFamily: hasUrduContent ? 'Noto Sans Urdu, Arial, sans-serif' : 'inherit',
+          direction: hasUrduContent ? 'rtl' : 'ltr'
+        }}
+      >
+        {content}
+      </div>
+    );
   }
 
   const renderFormattedContent = (text: string) => {
@@ -20,8 +38,18 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({
       .map((paragraph, index) => {
         if (!paragraph.trim()) return null;
 
+        const paragraphHasUrdu = containsUrdu(paragraph);
+
         return (
-          <div key={index} className={index > 0 ? "mt-3" : ""}>
+          <div 
+            key={index} 
+            className={index > 0 ? "mt-3" : ""}
+            style={{ 
+              fontFamily: paragraphHasUrdu ? 'Noto Sans Urdu, Arial, sans-serif' : 'inherit',
+              direction: paragraphHasUrdu ? 'rtl' : 'ltr',
+              textAlign: paragraphHasUrdu ? 'right' : 'left'
+            }}
+          >
             {renderParagraph(paragraph)}
           </div>
         );
@@ -43,11 +71,19 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({
           );
         }
 
+        const lineHasUrdu = containsUrdu(line);
+
         if (line.match(/^[•-]\s+/)) {
           const content = line.replace(/^[•-]\s+/, "");
           return (
-            <div key={lineIndex} className="flex items-start mb-1">
-              <span className="text-blue-500 mr-2 mt-0.5">•</span>
+            <div 
+              key={lineIndex} 
+              className={`flex items-start mb-1 ${lineHasUrdu ? 'flex-row-reverse' : ''}`}
+              style={{ 
+                direction: lineHasUrdu ? 'rtl' : 'ltr'
+              }}
+            >
+              <span className={`text-blue-500 mt-0.5 ${lineHasUrdu ? 'ml-2 mr-0' : 'mr-2 ml-0'}`}>•</span>
               <span>{renderInlineFormatting(content)}</span>
             </div>
           );
@@ -55,14 +91,28 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({
 
         if (line.match(/^\d+\.\s+/)) {
           return (
-            <div key={lineIndex} className="mb-1">
+            <div 
+              key={lineIndex} 
+              className="mb-1"
+              style={{ 
+                direction: lineHasUrdu ? 'rtl' : 'ltr',
+                textAlign: lineHasUrdu ? 'right' : 'left'
+              }}
+            >
               {renderInlineFormatting(line)}
             </div>
           );
         }
 
         return (
-          <div key={lineIndex} className={lineIndex > 0 ? "mt-2" : ""}>
+          <div 
+            key={lineIndex} 
+            className={lineIndex > 0 ? "mt-2" : ""}
+            style={{ 
+              direction: lineHasUrdu ? 'rtl' : 'ltr',
+              textAlign: lineHasUrdu ? 'right' : 'left'
+            }}
+          >
             {renderInlineFormatting(line)}
           </div>
         );
@@ -73,7 +123,6 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({
   const renderInlineFormatting = (text: string) => {
     const parts = [];
     let lastIndex = 0;
-
     const inlineRegex =
       /(\*\*([^*]+)\*\*|\*([^*]+)\*|\[([^\]]+)\]\(([^)]+)\))/g;
 
@@ -92,6 +141,9 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({
           <strong
             key={match.index}
             className="font-semibold text-gray-900 dark:text-white"
+            style={{ 
+              fontFamily: containsUrdu(boldText) ? 'Noto Sans Urdu, Arial, sans-serif' : 'inherit'
+            }}
           >
             {boldText}
           </strong>
@@ -100,7 +152,13 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({
         // Italic text
         const italicText = match[3];
         parts.push(
-          <em key={match.index} className="italic">
+          <em 
+            key={match.index} 
+            className="italic"
+            style={{ 
+              fontFamily: containsUrdu(italicText) ? 'Noto Sans Urdu, Arial, sans-serif' : 'inherit'
+            }}
+          >
             {italicText}
           </em>
         );
@@ -115,6 +173,9 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({
             target="_blank"
             rel="noopener noreferrer"
             className="text-blue-500 hover:text-blue-700 underline font-medium transition-colors"
+            style={{ 
+              fontFamily: containsUrdu(linkText) ? 'Noto Sans Urdu, Arial, sans-serif' : 'inherit'
+            }}
           >
             {linkText}
           </a>
