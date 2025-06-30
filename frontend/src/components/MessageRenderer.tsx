@@ -35,6 +35,13 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({
     return lines
       .map((line, lineIndex) => {
         if (!line.trim()) return null;
+        if (line.trim() === "---") {
+          return (
+            <div key={lineIndex} className="my-4">
+              <hr className="border-t border-gray-300 dark:border-gray-600" />
+            </div>
+          );
+        }
 
         if (line.match(/^[•-]\s+/)) {
           const content = line.replace(/^[•-]\s+/, "");
