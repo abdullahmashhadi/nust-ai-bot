@@ -2,6 +2,9 @@
 const { startScraping } = require("../services/bgService");
 const { DocumentService } = require("../services/DocumentService");
 const { VectorStore } = require("../services/vectoreStore");
+const { createClient } = require("@deepgram/sdk");
+const fs = require("fs");
+
 const axios = require("axios");
 const documentService = new DocumentService();
 
@@ -54,8 +57,66 @@ const processPDF = async (req, res) => {
       res.status(500).json({ error: "Failed to process PDF" });
     }
 }
+const transcribeAudio = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No audio file provided" });
+    }
+
+    console.log('Received audio file:', {
+      originalname: req.file.originalname,
+      mimetype: req.file.mimetype,
+      size: req.file.size,
+      path: req.file.path
+    });
+
+    const deepgram = createClient(process.env.DEEPGRAM_API_KEY);
+    
+    const audioBuffer = fs.readFileSync(req.file.path);
+    
+    console.log('Audio buffer size:', audioBuffer.length);
+    
+    const { result, error } = await deepgram.listen.prerecorded.transcribeFile(
+      audioBuffer,
+      {
+        model: 'nova-2',
+        smart_format: true,
+      }
+    );
+    
+    // Clean up uploaded file
+    fs.unlinkSync(req.file.path);
+    
+    if (error) {
+      console.error('Deepgram error:', error);
+      throw error;
+    }
+    
+    if (!result.results?.channels?.[0]?.alternatives?.[0]?.transcript) {
+      return res.status(400).json({ error: 'No transcript generated' });
+    }
+    
+    const transcript = result.results.channels[0].alternatives[0].transcript;
+    console.log('Transcription successful:', transcript);
+    
+    res.json({ text: transcript });
+  } catch (error) {
+    console.error('Transcription error:', error);
+    
+    // Clean up file on error
+    if (req.file?.path && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+    
+    res.status(500).json({ 
+      error: 'Transcription failed',
+      details: error.message 
+    });
+  }
+};
 module.exports = {
   scrapWebsite,
   uploadEmbeddings,
-  processPDF
-};
+  processPDF,
+  transcribeAudio
+}

@@ -66,6 +66,70 @@ class ChatWidgetManager {
       border-style: solid;
       border-color: #e5e7eb;
     }
+      .bg-red-50 { background-color: #fef2f2; }
+.bg-red-100 { background-color: #fee2e2; }
+.bg-red-500 { background-color: #ef4444; }
+.bg-red-600 { background-color: #dc2626; }
+.text-red-200 { color: #fecaca; }
+.text-red-400 { color: #f87171; }
+.text-red-600 { color: #dc2626; }
+.text-red-800 { color: #991b1b; }
+.border-red-200 { border-color: #fecaca; }
+.border-red-300 { border-color: #fca5a5; }
+.border-red-800 { border-color: #991b1b; }
+
+.hover\\:bg-red-100:hover { background-color: #fee2e2; }
+.hover\\:bg-red-600:hover { background-color: #dc2626; }
+
+.focus\\:ring-red-500:focus { box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.5); }
+
+/* Dark theme red backgrounds */
+.dark\\:bg-red-900\\/20 { background-color: rgba(127, 29, 29, 0.2); }
+.dark\\:border-red-800 { border-color: #991b1b; }
+.dark\\:text-red-200 { color: #fecaca; }
+.dark\\:text-red-400 { color: #f87171; }
+.dark\\:hover\\:bg-red-800\\/30:hover { background-color: rgba(153, 27, 27, 0.3); }
+
+/* Wave animation keyframes */
+@keyframes audioWave {
+  0%, 100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(1.5);
+  }
+}
+
+.audio-wave-bar {
+  animation: audioWave 0.5s ease-in-out infinite;
+}
+
+.audio-wave-bar:nth-child(2n) {
+  animation-delay: 0.1s;
+}
+
+.audio-wave-bar:nth-child(3n) {
+  animation-delay: 0.2s;
+}
+
+.audio-wave-bar:nth-child(4n) {
+  animation-delay: 0.3s;
+}
+
+.audio-wave-bar:nth-child(5n) {
+  animation-delay: 0.4s;
+}
+
+/* Error message styles */
+.error-message {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border-left: 4px solid #ef4444;
+}
+
+.dark .error-message {
+  background: linear-gradient(135deg, rgba(127, 29, 29, 0.2) 0%, rgba(153, 27, 27, 0.3) 100%);
+  border-left-color: #f87171;
+}
     
     ::before, ::after {
       --tw-content: '';

@@ -29,12 +29,143 @@ const ChatWidget: React.FC<ChatWidgetOptions> = ({
   const [inputValue, setInputValue] = useState("");
   const [isDisabled, setIsDisabled] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [isAudioRecording, setIsAudioRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [audioLevel, setAudioLevel] = useState(0);
+  const [isTranscribing, setIsTranscribing] = useState(false);
 
   const socketRef = useRef<Socket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const conversationId = useRef(generateId());
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
 
+  const startAudioRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+      });
+      audioContextRef.current = new AudioContext();
+      const source = audioContextRef.current.createMediaStreamSource(stream);
+      analyserRef.current = audioContextRef.current.createAnalyser();
+      analyserRef.current.fftSize = 256;
+      source.connect(analyserRef.current);
+      const options = {
+        mimeType: 'audio/webm;codecs=opus', // More specific codec
+        audioBitsPerSecond: 128000,
+      };
+  
+      if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+        options.mimeType = 'audio/webm';
+      }
+      if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+        options.mimeType = 'audio/mp4';
+      }
+      if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+        options.mimeType = ''; 
+      }
+  
+      mediaRecorderRef.current = new MediaRecorder(stream, options);
+      audioChunksRef.current = [];
+  
+
+      mediaRecorderRef.current.ondataavailable = (event) => {
+        audioChunksRef.current.push(event.data);
+      };
+      mediaRecorderRef.current.onstop = async() => {
+        const audioBlob = new Blob(audioChunksRef.current, {
+          type: mediaRecorderRef.current?.mimeType || 'audio/webm',
+        });
+        await transcribeAudio(audioBlob);
+        stream.getTracks().forEach((track) => track.stop());
+        audioContextRef.current?.close();
+      };
+      mediaRecorderRef.current.start();
+      setIsAudioRecording(true);
+      setRecordingTime(0);
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingTime((prev) => prev + 1);
+      }, 1000);
+      updateAudioLevel();
+    } catch (error) {
+      console.error("Error starting audio recording:", error);
+      addErrorMessage("Could not access microphone. Please check permissions.");
+    }
+  };
+
+  const stopAudioRecording = () => {
+    if (mediaRecorderRef.current && isAudioRecording) {
+      mediaRecorderRef.current.stop();
+      setIsAudioRecording(false);
+      setIsTranscribing(true);
+      
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+      }
+      
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    }
+  };
+
+  const updateAudioLevel = () => {
+    if (analyserRef.current && isAudioRecording) {
+      const bufferLength = analyserRef.current.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+      analyserRef.current.getByteFrequencyData(dataArray);
+      
+      const average = dataArray.reduce((sum, value) => sum + value, 0) / bufferLength;
+      setAudioLevel(average);
+      
+      animationFrameRef.current = requestAnimationFrame(updateAudioLevel);
+    }
+  };
+
+  const transcribeAudio = async (audioBlob: Blob) => {
+    try {
+      const formData = new FormData();
+      formData.append('audio', audioBlob);
+      
+      const response = await fetch(`${serverUrl}/api/transcribe`, {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (response.ok) {
+        const { text } = await response.json();
+        setInputValue(text);
+      } else {
+        addErrorMessage("Failed to transcribe audio. Please try again.");
+      }
+    } catch (error) {
+      console.error('Error transcribing audio:', error);
+      addErrorMessage("Error transcribing audio. Please try again.");
+    } finally {
+      setIsTranscribing(false);
+    }
+  };
+  const formatRecordingTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+  useEffect(() => {
+    return () => {
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+      }
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+      audioContextRef.current?.close();
+    };
+  }, []);
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -42,7 +173,8 @@ const ChatWidget: React.FC<ChatWidgetOptions> = ({
   const addMessage = (
     text: string,
     sender: "user" | "bot",
-    isStreaming = false
+    isStreaming = false,
+    isError = false,
   ): string => {
     const id = generateId();
     const newMessage: Message = {
@@ -51,6 +183,7 @@ const ChatWidget: React.FC<ChatWidgetOptions> = ({
       sender,
       timestamp: new Date(),
       isStreaming,
+      isError,
     };
 
     setMessages((prev) => [...prev, newMessage]);
@@ -58,13 +191,7 @@ const ChatWidget: React.FC<ChatWidgetOptions> = ({
   };
 
   const addErrorMessage = (text: string) => {
-    const errorMessage: Message = {
-      id: generateId(),
-      text,
-      sender: "bot",
-      timestamp: new Date(),
-    };
-    setMessages((prev) => [...prev, errorMessage]);
+    addMessage(text, "bot", false, true);
   };
 
   const sendMessage = () => {
@@ -114,9 +241,6 @@ const ChatWidget: React.FC<ChatWidgetOptions> = ({
   const handleStreamChunk = (data: StreamData) => {
     console.log(`Received stream data:`, data);
     if (data.type == "chunk" && data.streamingId) {
-      console.log(`Received chunk for ID: ${data.streamingId}`);
-      console.log(`Chunk content: ${data.content}`);
-      console.log(`Current messages:`, messages);
       setMessages((prev) =>
         prev.map((msg) =>
           msg.id === data.streamingId
@@ -267,12 +391,22 @@ const ChatWidget: React.FC<ChatWidgetOptions> = ({
                 }`}
               >
                 <div
-                  className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm shadow-lg ${
-                    message.sender === "user"
+                  className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm shadow-lg transition-all duration-200 hover:shadow-xl ${
+                    message.isError
+                      ? "bg-red-50 text-red-800 border border-red-200 dark:bg-red-900/20 dark:text-red-200 dark:border-red-800 rounded-bl-md"
+                      : message.sender === "user"
                       ? currentTheme.userMsg + " rounded-br-md"
                       : currentTheme.botMsg + " rounded-bl-md"
-                  } transition-all duration-200 hover:shadow-xl`}
+                  }`}
                 >
+                   {message.isError && (
+                    <div className="flex items-center space-x-2 mb-2">
+                      <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                      </svg>
+                      <span className="font-medium text-xs">Error</span>
+                    </div>
+                  )}
                   <MessageRenderer
                     content={message.text}
                     isUser={message.sender === "user"}
@@ -319,24 +453,116 @@ const ChatWidget: React.FC<ChatWidgetOptions> = ({
               </div>
             )}
 
+            {isTranscribing && (
+              <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+                <div className="flex items-center space-x-3">
+                  <div className="typing-indicator-small">
+                    <div className="typing-dot-small bg-blue-500"></div>
+                    <div className="typing-dot-small bg-blue-500"></div>
+                    <div className="typing-dot-small bg-blue-500"></div>
+                  </div>
+                  <span className="text-blue-600 dark:text-blue-400 text-sm">
+                    Converting speech to text...
+                  </span>
+                </div>
+              </div>
+            )}
+
+
             <div className="flex space-x-3 items-end">
               <div className="flex-1 relative">
-                <textarea
-                  ref={textareaRef}
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Ask me anything about NUST..."
-                  disabled={isDisabled}
-                  rows={1}
-                  className={`w-full resize-none rounded-xl border-2 ${currentTheme.inputBorder} px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 transition-all duration-200 ${currentTheme.inputBg} ${currentTheme.inputText} placeholder-gray-400`}
-                  style={{
-                    maxHeight: "120px",
-                    minHeight: "48px",
-                  }}
-                />
+              {isAudioRecording ? (
+                  <div className={`w-full rounded-xl border-2 border-red-300 px-4 py-3 transition-all duration-200 bg-red-50 dark:bg-red-900/20`}>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center space-x-2">
+                        <div className="relative">
+                          <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                          <div className="absolute inset-0 bg-red-500 rounded-full animate-ping opacity-75"></div>
+                        </div>
+                        <span className="text-red-600 dark:text-red-400 font-medium text-sm">
+                          Recording
+                        </span>
+                        <span className="text-red-600 dark:text-red-400 text-xs">
+                          {formatRecordingTime(recordingTime)}
+                        </span>
+                      </div>
+                      <button
+                        onClick={stopAudioRecording}
+                        className="text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-800/30 rounded-lg p-1 transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M6 6h12v12H6z"/>
+                        </svg>
+                      </button>
+                    </div>
+                    
+                    <div className="flex items-center justify-center space-x-1 h-12">
+                      {Array.from({ length: 30 }, (_, i) => {
+                        const baseHeight = 8;
+                        const maxHeight = 40;
+                        const normalizedLevel = audioLevel / 255;
+                        const randomFactor = Math.sin((Date.now() / 100) + i) * 0.5 + 0.5;
+                        const height = baseHeight + (normalizedLevel * maxHeight * randomFactor);
+                        
+                        return (
+                          <div
+                            key={i}
+                            className="bg-red-500 rounded-full transition-all duration-100 ease-out"
+                            style={{
+                              width: '3px',
+                              height: `${Math.max(baseHeight, height)}px`,
+                              opacity: 0.6 + (normalizedLevel * 0.4),
+                              animationDelay: `${i * 50}ms`,
+                            }}
+                          />
+                        );
+                      })}
+                    </div>
+                    
+                    <div className="text-center mt-2">
+                      <span className="text-red-600 dark:text-red-400 text-xs">
+                        Speak now... Click stop when finished
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <textarea
+                    ref={textareaRef}
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Ask me anything about NUST..."
+                    disabled={isDisabled || isTranscribing}
+                    rows={1}
+                    className={`w-full resize-none rounded-xl border-2 ${currentTheme.inputBorder} px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 transition-all duration-200 ${currentTheme.inputBg} ${currentTheme.inputText} placeholder-gray-400`}
+                    style={{
+                      maxHeight: "120px",
+                      minHeight: "48px",
+                    }}
+                  />
+                )}
               </div>
+              <button
+                onClick={isAudioRecording ? stopAudioRecording : startAudioRecording}
+                disabled={isDisabled || isTranscribing}
+                className={`px-4 py-3 rounded-xl font-medium transition-all duration-200 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-offset-2 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:transform-none ${
+                  isAudioRecording 
+                    ? 'bg-red-500 hover:bg-red-600 text-white focus:ring-red-500' 
+                    : 'bg-gray-500 hover:bg-gray-600 text-white focus:ring-gray-500'
+                }`}
+                style={{ backgroundColor: primaryColor }}
 
+              >
+                {isAudioRecording ? (
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M6 6h12v12H6z"/>
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2a3 3 0 0 1 3 3v6a3 3 0 0 1-3 3 3 3 0 0 1-3-3V5a3 3 0 0 1 3-3m7 9c0 3.53-2.61 6.44-6 6.93V21h-2v-3.07c-3.39-.49-6-3.4-6-6.93h2a5 5 0 0 0 5 5 5 5 0 0 0 5-5h2z"/>
+                  </svg>
+                )}
+              </button>
               <button
                 onClick={sendMessage}
                 disabled={isDisabled || !inputValue.trim()}
@@ -357,10 +583,12 @@ const ChatWidget: React.FC<ChatWidgetOptions> = ({
                   />
                 </svg>
               </button>
+
+              {/* audio input button */}
             </div>
 
             <div className="mt-2 text-xs text-gray-400 text-center">
-              Press Enter to send • Shift+Enter for new line
+            Press Enter to send • Shift+Enter for new line • Click mic to record
             </div>
           </div>
         </div>

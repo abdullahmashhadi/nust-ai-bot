@@ -36,8 +36,7 @@ io.on("connection", (socket) => {
       const { message,conversationId,streamingId } = data;
 
       const stream = await chatService.streamResponse(message, conversationId);
-      console.log(`Streaming response for conversation ${conversationId}:`, message);
-      console.log(`Streaming ID: ${streamingId || "not provided"}`);
+  
 
       for await (const chunk of stream) {
         socket.emit("chat_stream", {
@@ -66,6 +65,7 @@ io.on("connection", (socket) => {
     console.log("Client disconnected:", socket.id);
   });
 });
+
 
 app.get("/health", (req, res) => {
   res.json({ status: "OK", timestamp: new Date().toISOString() });

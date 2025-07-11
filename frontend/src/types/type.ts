@@ -11,6 +11,7 @@ export interface Message {
   sender: 'user' | 'bot';
   timestamp: Date;
   isStreaming?: boolean;
+  isError?: boolean;
 }
 
 export interface StreamData {
