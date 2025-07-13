@@ -12,6 +12,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@deepgram/sdk": "^4.9.1",
     "@langchain/community": "^0.3.47",
     "@langchain/openai": "^0.5.15",
     "axios": "^1.10.0",
@@ -19,8 +20,10 @@
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
+    "form-data": "^4.0.3",
     "langchain": "^0.3.29",
     "multer": "^2.0.1",
+    "node-vad": "^1.1.4",
     "openai": "^5.6.0",
     "pdf-lib": "^1.17.1",
     "pdf-parse": "^1.1.1",

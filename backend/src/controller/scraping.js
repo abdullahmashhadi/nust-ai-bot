@@ -1,7 +1,7 @@
 
-const { startScraping } = require("../services/bgService");
-const { DocumentService } = require("../services/DocumentService");
-const { VectorStore } = require("../services/vectoreStore");
+const { startScraping } = require("../services/bgService.js");
+const { DocumentService } = require("../services/DocumentService.js");
+const { VectorStore } = require("../services/vectoreStore.js");
 const { createClient } = require("@deepgram/sdk");
 const fs = require("fs");
 
