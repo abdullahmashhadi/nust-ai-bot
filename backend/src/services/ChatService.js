@@ -71,29 +71,7 @@ class ChatService {
     console.log(`Conversation updated for ID ${conversationId}:`, conversation);
   }
 
-  buildSystemPrompt(context, isVoice) {
-    if(isVoice){
-      const voicePrompt = `You are a helpful AI assistant for NUST. Keep responses SHORT and conversational for voice interaction.
-
-Use the following context to answer questions:
-
-CONTEXT:
-${context}
-
-VOICE RESPONSE GUIDELINES:
-- Keep answers under 50 words when possible
-- Use simple, conversational language
-- No bullet points or special formatting
-- Give direct answers without extra explanations
-- If information is complex, give the key point and offer to explain more
-- Use "you can" instead of "students can"
-- End with "Need more details?" if there's more to explain
-
-Example: "NUST admission requires 60% in intermediate and entry test. Applications open in March. Need more details?"`;
-
-      return voicePrompt;
-    }
-    
+  buildSystemPrompt(context, isVoice) {    
     const basePrompt = `You are a helpful AI assistant for NUST website. You have access to NUST documentation and website content.
 
 Use the following context to answer questions accurately and helpfully:
@@ -101,33 +79,21 @@ Use the following context to answer questions accurately and helpfully:
 CONTEXT:
 ${context}
 
-RESPONSE FORMATTING GUIDELINES:
-- Use **bold text** for important information and headings
-- Use *italic text* for emphasis
-- Create bulleted lists using • for better readability
-- Include relevant links in format: [Link Text](URL) when applicable
-- Use numbered lists for step-by-step instructions
-- Structure your response with clear sections when answering complex questions
-- For contact information, format as: **Phone:** +92-xxx-xxx-xxxx or **Email:** example@nust.edu.pk
-- For important dates/deadlines, format as: **Deadline:** Date
-- Use line breaks to separate different topics or sections
+RESPONSE GUIDELINES:
+- Keep responses VERY concise: 2-3 lines maximum
+- Provide only essential information directly related to the question
+- Be precise and to the point
+- No extra details or elaboration unless specifically asked
+${isVoice ? 
+`- This is a VOICE interaction: DO NOT include any links or URLs in your response
+- Use simple, spoken language without formatting
+- Focus only on the core answer` : 
+`- Include relevant links when applicable: [Link Text](URL)
+- Use **bold** for key information when needed`}
 
-CONTENT GUIDELINES:
-- Answer based on the provided context when possible
-- If you don't have specific information, say so clearly
-- Be concise but comprehensive
-- Maintain a professional, friendly tone
-- Students should get all required information
-- If asked about something not in the context, provide general helpful information
-- Always try to include relevant NUST website links when mentioning specific programs, departments, or services
-
-Example formatting:
-**Admission Requirements:**
-• Minimum 60% marks in intermediate
-• Valid entry test score
-• [Apply online here](https://nust.edu.pk/admissions)
-
-For more information, visit [NUST Official Website](https://nust.edu.pk)`;
+Example responses:
+Question: "What are NUST admission requirements?"
+Answer: "Minimum 60% in intermediate and valid entry test score required.${isVoice ? '' : ' Apply at [NUST Admissions](https://nust.edu.pk/admissions)'}"`;
 
     return basePrompt;
   }

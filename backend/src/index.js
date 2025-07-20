@@ -41,7 +41,11 @@ io.on("connection", (socket) => {
   socket.on("chat_message", async (data) => {
     try {
       const { message, conversationId, streamingId } = data;
-      const stream = await chatService.streamResponse(message, conversationId);
+      
+      // Check if message contains "IS VOICE" to determine voice mode
+      const isVoice = message.includes("IS VOICE");
+      
+      const stream = await chatService.streamResponse(message, conversationId, isVoice);
 
       for await (const chunk of stream) {
         socket.emit("chat_stream", {
@@ -99,7 +103,8 @@ io.on("connection", (socket) => {
           console.log("Transcription:", transcription);
           
           if (transcription && transcription.trim()) {
-            const stream = await chatService.streamResponse(transcription, data.conversationId || 'voice-chat',true);
+            // Voice messages are always voice interactions
+            const stream = await chatService.streamResponse(transcription, data.conversationId || 'voice-chat', true);
             let fullResponse = "";
             
             for await (const chunk of stream) {
