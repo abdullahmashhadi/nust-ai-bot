@@ -102,7 +102,7 @@ Answer: "Minimum 60% in intermediate and valid entry test score required.${isVoi
     try {
       console.log("Transcribing audio buffer of size:", buffer.length);
       
-      // Create form data
+      // Create form da
       const form = new FormData();
       
       form.append("file", buffer, {
