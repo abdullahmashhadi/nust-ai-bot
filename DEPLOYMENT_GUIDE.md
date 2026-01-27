@@ -1,4 +1,5 @@
 # NUST Chatbot Deployment Guide
+
 ## Deploy to nusthelp.com
 
 ---
@@ -8,6 +9,7 @@
 ### **Step 1: Deploy Backend to Render.com**
 
 1. **Push to GitHub** (if not already):
+
    ```bash
    cd /media/mashhadi/2ndDrive/nustBot/nust-bots
    git init
@@ -29,6 +31,7 @@
 
 4. **Add Environment Variables**:
    Copy all variables from `backend/.env`:
+
    ```
    SUPABASE_URL=your_supabase_url
    SUPABASE_KEY=your_key
@@ -44,8 +47,9 @@
 
 1. **Update Frontend API URL**:
    Edit `frontend/src/config.ts` (or wherever API URL is):
+
    ```typescript
-   const API_URL = 'https://nust-bot-backend.onrender.com/api';
+   const API_URL = "https://nust-bot-backend.onrender.com/api";
    ```
 
 2. **Create Vercel Account**: [vercel.com](https://vercel.com)
@@ -61,6 +65,7 @@
 ### **Step 3: Connect GoDaddy Domain**
 
 #### **For Frontend (nusthelp.com)**:
+
 1. Go to GoDaddy → Domain Settings → DNS Management
 2. Delete existing A records for `@`
 3. Add **CNAME Record**:
@@ -72,6 +77,7 @@
 5. Verify DNS (takes 10-60 mins)
 
 #### **For Backend API (api.nusthelp.com)**:
+
 1. In GoDaddy DNS, add **CNAME**:
    - Type: `CNAME`
    - Name: `api`
@@ -85,6 +91,7 @@
 ## **Option 2: VPS Deployment (Full Control)**
 
 ### **Step 1: Get a VPS**
+
 - **DigitalOcean Droplet**: $6/month (recommended)
 - **AWS EC2**: Free tier for 1 year
 - **Vultr/Linode**: Similar pricing
@@ -155,6 +162,7 @@ nano /etc/nginx/sites-available/nusthelp
 ```
 
 Paste this configuration:
+
 ```nginx
 server {
     listen 80;
@@ -230,6 +238,7 @@ certbot renew --dry-run
 ## **Maintenance Commands**
 
 ### **PM2 (if using VPS)**
+
 ```bash
 pm2 status           # Check status
 pm2 logs nust-backend # View logs
@@ -238,6 +247,7 @@ pm2 stop nust-backend    # Stop
 ```
 
 ### **Update Deployment**
+
 ```bash
 # Pull latest code
 cd /var/www/nustbot
@@ -256,6 +266,7 @@ pm2 restart nust-backend
 ## **Troubleshooting**
 
 ### **Backend not responding**
+
 ```bash
 pm2 logs nust-backend
 # Check for errors
@@ -263,10 +274,12 @@ pm2 logs nust-backend
 ```
 
 ### **Frontend not loading**
+
 - Check Nginx config: `nginx -t`
 - Check Nginx logs: `tail -f /var/log/nginx/error.log`
 
 ### **DNS not working**
+
 - Wait 1 hour for propagation
 - Check DNS: `nslookup nusthelp.com`
 - Flush DNS cache: `ipconfig /flushdns` (Windows) or `sudo dscacheutil -flushcache` (Mac)
@@ -275,17 +288,18 @@ pm2 logs nust-backend
 
 ## **Cost Comparison**
 
-| Option | Cost | Pros | Cons |
-|--------|------|------|------|
-| **Render + Vercel** | Free | Easy, auto-deploy, HTTPS included | Backend sleeps after 15 min inactivity (free tier) |
-| **DigitalOcean Droplet** | $6/mo | Full control, always on | Manual setup, you manage updates |
-| **Railway** | $5/mo | Like Render but more reliable free tier | Costs after free credits |
+| Option                   | Cost  | Pros                                    | Cons                                               |
+| ------------------------ | ----- | --------------------------------------- | -------------------------------------------------- |
+| **Render + Vercel**      | Free  | Easy, auto-deploy, HTTPS included       | Backend sleeps after 15 min inactivity (free tier) |
+| **DigitalOcean Droplet** | $6/mo | Full control, always on                 | Manual setup, you manage updates                   |
+| **Railway**              | $5/mo | Like Render but more reliable free tier | Costs after free credits                           |
 
 ---
 
 ## **Recommended: Start with Render + Vercel**
 
 Benefits:
+
 - ✅ Free to start
 - ✅ Automatic deployments from GitHub
 - ✅ HTTPS included
@@ -293,6 +307,7 @@ Benefits:
 - ✅ No server management
 
 Upgrade to VPS later if you need:
+
 - 24/7 uptime without cold starts
 - More control
 - Lower cost at scale

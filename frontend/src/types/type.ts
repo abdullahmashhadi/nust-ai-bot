@@ -4,6 +4,7 @@ export interface ChatWidgetOptions {
     theme?: 'light' | 'dark';
     title?: string;
     primaryColor?: string;
+    forceOpen?: boolean;
 }
 export interface Message {
   id: string;

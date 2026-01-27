@@ -17,10 +17,10 @@ class DocumentService {
       const dataBuffer = fs.readFileSync(filePath);
       const pdfData = await pdf(dataBuffer);
       const chunks = this.splitIntoChunks(pdfData.text, 1000, 200);
-      
+
       // Extract filename for better metadata
-      const fileName = filePath.split('/').pop();
-      
+      const fileName = filePath.split("/").pop();
+
       const documentsWithMetadata = chunks.map((chunk, index) => ({
         content: chunk,
         metadata: {
@@ -33,12 +33,12 @@ class DocumentService {
         },
         source_url: sourceUrl || `pdf:${fileName}`,
       }));
-      
+
       // Only delete if not keeping file
       if (!keepFile) {
         fs.unlinkSync(filePath);
       }
-      
+
       await this.vectorStore.addDocuments(documentsWithMetadata);
       return documentsWithMetadata;
     } catch (error) {
