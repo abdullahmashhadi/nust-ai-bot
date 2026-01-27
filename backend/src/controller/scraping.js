@@ -10,7 +10,7 @@ const documentService = new DocumentService();
 
 const scrapWebsite = async (req, res, next) => {
   try {
-    const { url, maxPages = 500, usePuppeteer = true } = req.body;
+    const { url, maxPages = 1000, usePuppeteer = true } = req.body;
       if (!url) {
         return res.status(400).json({ error: "URL is required" });
       }

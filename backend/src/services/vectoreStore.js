@@ -1,11 +1,11 @@
 require("dotenv").config();
-const {createClient} = require("@supabase/supabase-js");
-const {OpenAI} = require("openai");
+const { createClient } = require("@supabase/supabase-js");
+const { OpenAI } = require("openai");
 
 class VectorStore {
   static #instance;
 
-  static getInstance(){
+  static getInstance() {
     if (!VectorStore.#instance) {
       VectorStore.#instance = new VectorStore();
     }
@@ -13,21 +13,22 @@ class VectorStore {
   }
   constructor() {
     if (VectorStore.#instance) {
-      throw new Error("Use VectorStore.getInstance() instead of new VectorStore()");
+      throw new Error(
+        "Use VectorStore.getInstance() instead of new VectorStore()",
+      );
     }
     this.openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     });
     this.supabase = createClient(
       process.env.SUPABASE_URL || "",
-      process.env.SUPABASE_SERVICE_ROLE_KEY || ""
+      process.env.SUPABASE_SERVICE_ROLE_KEY || "",
     );
   }
   async initializeDatabase() {
     try {
-      const { error: extensionError } = await this.supabase.rpc(
-        "enable_pgvector"
-      );
+      const { error: extensionError } =
+        await this.supabase.rpc("enable_pgvector");
       if (
         extensionError &&
         !extensionError.message.includes("already exists")
@@ -36,7 +37,7 @@ class VectorStore {
       }
 
       const { error: tableError } = await this.supabase.rpc(
-        "create_documents_table"
+        "create_documents_table",
       );
       if (tableError && !tableError.message.includes("already exists")) {
         console.error("Error creating table:", tableError);
@@ -49,9 +50,88 @@ class VectorStore {
     }
   }
 
+  async deleteDocumentsBySource(sourceUrl) {
+    try {
+      // Normalize URL - remove trailing slash and protocol variations
+      const normalizedUrl = sourceUrl
+        .replace(/^https?:\/\//, "")
+        .replace(/\/$/, "");
+
+      console.log(`🗑️  Deleting documents from domain: ${normalizedUrl}`);
+
+      // Delete documents where source_url starts with the domain
+      const { data, error } = await this.supabase
+        .from("documents")
+        .delete()
+        .or(
+          `source_url.ilike.%${normalizedUrl}%,metadata->>source.ilike.%${normalizedUrl}%`,
+        );
+
+      if (error) {
+        console.error("Error deleting documents:", error);
+        throw error;
+      }
+
+      console.log(`✅ Deleted documents from ${normalizedUrl}`);
+    } catch (error) {
+      console.error("Error in deleteDocumentsBySource:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete documents with empty or null source_url (old documents before source tracking)
+   */
+  async deleteDocumentsWithEmptySource() {
+    try {
+      console.log(`🗑️  Deleting documents with empty source_url...`);
+
+      const { data, error } = await this.supabase
+        .from("documents")
+        .delete()
+        .or("source_url.is.null,source_url.eq.");
+
+      if (error) {
+        console.error("Error deleting documents:", error);
+        throw error;
+      }
+
+      console.log(`✅ Deleted documents with empty source_url`);
+      return data;
+    } catch (error) {
+      console.error("Error in deleteDocumentsWithEmptySource:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete documents created before a specific date
+   */
+  async deleteDocumentsBeforeDate(dateString) {
+    try {
+      console.log(`🗑️  Deleting documents created before ${dateString}...`);
+
+      const { data, error } = await this.supabase
+        .from("documents")
+        .delete()
+        .lt("created_at", dateString);
+
+      if (error) {
+        console.error("Error deleting documents:", error);
+        throw error;
+      }
+
+      console.log(`✅ Deleted documents created before ${dateString}`);
+      return data;
+    } catch (error) {
+      console.error("Error in deleteDocumentsBeforeDate:", error);
+      throw error;
+    }
+  }
+
   async addDocuments(documents) {
     console.log(
-      `Adding ${documents.length} documents to Supabase vector store...`
+      `Adding ${documents.length} documents to Supabase vector store...`,
     );
 
     const batch = [];
@@ -63,6 +143,7 @@ class VectorStore {
           metadata: doc.metadata || {},
           embedding: embedding,
           created_at: new Date().toISOString(),
+          source_url: doc.source_url || "",
         };
         batch.push(documentRecord);
         if (batch.length >= 10) {
@@ -100,14 +181,107 @@ class VectorStore {
       throw error;
     }
   }
-
-  async retrieveContext(
-    query,
-    topK = 5,
-    similarityThreshold = 0.7
-  ) {
+  isFeeContext(query) {
+    let isFees = false;
     try {
-      const queryEmbedding = await this.generateEmbedding(query);
+      const feeKeywords = [
+        "fee",
+        "fees",
+        "cost",
+        "costs",
+        "tuition",
+        "charges",
+        "charge",
+        "payment",
+        "pay",
+        "price",
+        "pricing",
+        "amount",
+        "money",
+        "semester fee",
+        "annual fee",
+        "admission fee",
+        "laboratory fee",
+        "how much",
+        "expense",
+        "expenses",
+        "financial",
+      ];
+
+      let enhancedQuery = query;
+
+      // Extract program and map to fee category
+      const program = this.extractProgramFromQuery(query);
+      if (program) {
+        const feeCategory = this.mapProgramToFeeCategory(program);
+        enhancedQuery = `${program} ${feeCategory} fee structure cost tuition semester PKR national students undergraduate`;
+      }
+
+      const isFeeQuery = feeKeywords.some((keyword) =>
+        enhancedQuery.toLowerCase().includes(keyword),
+      );
+      if (isFeeQuery) {
+        isFees = true;
+      }
+      return [isFees, enhancedQuery];
+    } catch (error) {
+      return [false, query];
+    }
+  }
+  extractProgramFromQuery(query) {
+    const programPatterns = {
+      // More specific patterns first
+      bscs: /b\.?s\.?c\.?s|computer\s+science|cs\s+program|computing\s+science/i,
+      bsse: /b\.?s\.?s\.?e|software\s+engineering|se\s+program|software\s+engineer/i,
+      beee: /b\.?e\.?e\.?e|electrical\s+engineering|ee\s+program|electrical\s+engineer/i,
+      bba: /b\.?b\.?a|business\s+administration|business\s+admin/i,
+      mba: /m\.?b\.?a|master.*business/i,
+      ms: /m\.?s\.?\s|master\s+of\s+science/i,
+      phd: /ph\.?d|doctorate/i,
+      // Less specific patterns last
+      be: /\bb\.?e\b(?!\w)|bachelor.*engineering/i,
+      bs: /\bb\.?s\b(?!\w)|bachelor.*science/i,
+      ba: /\bb\.?a\b(?!\w)|bachelor.*arts/i,
+    };
+
+    for (const [program, pattern] of Object.entries(programPatterns)) {
+      if (pattern.test(query)) {
+        return program;
+      }
+    }
+
+    return null;
+  }
+
+  mapProgramToFeeCategory(program) {
+    // Map programs to their fee categories based on NUST fee structure
+    const engineeringPrograms = [
+      "beee",
+      "bscs",
+      "bsse",
+      "be",
+      "bs", // Engineering, Computing, Natural Sciences, Applied Sciences, Geoinformatics, HND
+    ];
+
+    const businessPrograms = [
+      "bba",
+      "ba", // Architecture, Social Sciences & Business Studies
+    ];
+
+    if (engineeringPrograms.includes(program.toLowerCase())) {
+      return "Engineering Computing Natural Sciences Applied Sciences Geoinformatics ";
+    } else if (businessPrograms.includes(program.toLowerCase())) {
+      return "Architecture Social Sciences Business Studies  ";
+    }
+
+    // Default to engineering category for unspecified programs
+    return "Engineering Computing Natural Sciences Applied Sciences Geoinformatics HND ";
+  }
+
+  async retrieveContext(query, topK = 10, similarityThreshold = 0.5) {
+    try {
+      const [isFees, enhancedQuery] = this.isFeeContext(query);
+      const queryEmbedding = await this.generateEmbedding(enhancedQuery);
       const { data, error } = await this.supabase.rpc("match_documents", {
         query_embedding: queryEmbedding,
         match_threshold: similarityThreshold,
@@ -119,25 +293,40 @@ class VectorStore {
         return await this.fallbackSearch(query, topK);
       }
       if (!data || data?.length === 0) {
-        return "No relevant information found in the knowledge base.";
+        console.log("⚠️ No results found, trying lower threshold...");
+        // Retry with lower threshold
+        const { data: retryData } = await this.supabase.rpc("match_documents", {
+          query_embedding: queryEmbedding,
+          match_threshold: 0.3,
+          match_count: topK,
+        });
+        if (!retryData || retryData.length === 0) {
+          return "No relevant information found in the knowledge base.";
+        }
+        return this.formatResults(retryData);
       }
 
       // Build context from search results
-      const context = data
-        .map((doc) => {
-          const source = doc.metadata?.source || "Unknown source";
-          const title = doc.metadata?.title || "";
-          return `Source: ${source}${title ? ` (${title})` : ""}\n${
-            doc.content
-          }`;
-        })
-        .join("\n\n---\n\n");
-
-      return context;
+      return this.formatResults(data);
     } catch (error) {
       console.error("Context retrieval error:", error);
       return await this.fallbackSearch(query, topK);
     }
+  }
+
+  formatResults(data) {
+    let context = data
+      .map((doc) => {
+        const source = doc.metadata?.source || "Unknown source";
+        const title = doc.metadata?.title || "";
+        const similarity = doc.similarity
+          ? ` [Relevance: ${(doc.similarity * 100).toFixed(1)}%]`
+          : "";
+        return `Source: ${source}${title ? ` (${title})` : ""}${similarity}\n${doc.content}`;
+      })
+      .join("\n\n---\n\n");
+
+    return context;
   }
   async fallbackSearch(query, topK = 5) {
     try {

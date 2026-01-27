@@ -1,0 +1,11 @@
+Query,Expected Response,Actual Response,Score (1-5),Notes
+"When will NET series 2 be conducted in Quetta?","March 2026 or Mar 2026","The NET Series 2 in Quetta is scheduled to be conducted in March 2026.",5,Perfect match - correct date extracted from table
+"What are the dates for NET series 3 in Islamabad?","April 2026 or Apr 2026","The NET Series 3 in Islamabad is scheduled to be conducted in April 2026.",5,Perfect match - correct date extracted from table
+"When does NET series 4 registration close?","June 2026 or Apr – Jun 2026","The registration for NET Series 4 closes in June 2026.",5,Correct - registration period closes in June
+"When is NET series 2 in Islamabad?","31 Jan 2026 onwards","The NET Series 2 in Islamabad is scheduled to start from 31 January 2026 onwards.",5,Perfect match - exact date with proper formatting
+"Has the NET 2026 result been announced?","Yes, result of NET-2026 (Series-1) conducted from 22 Nov to 10 Dec 2025 has been uploaded. View by logging in.","Yes, the result for NET 2026 has been announced.",4,Correct but missing details (date range and login instruction)
+"Where can I register for the mathematics course for pre-medical students?","https://connected.nust.edu.pk/course/view.php?id=186","You can register for the mathematics course for pre-medical students by visiting the following link: NUST Connected.",4,Correct info but link text instead of full URL shown
+"What is the last date to apply for NET series 2?","25 Jan 2026 or January 25, 2026","The last date to apply for NET Series 2 is January 25, 2026. You can apply online through the NUST Admissions Portal.",5,Perfect - correct date with helpful additional info
+"When does ACT/SAT basis registration start for Fall 2026?","04-May-2026 or 4th May 2026","The registration for ACT/SAT Basis Admissions for the Fall 2026 session at NUST will start on May 4, 2026.",5,Perfect match - correct date
+"Is NET computer-based in Karachi?","No, in Karachi it is in paper-based format","No, in Karachi, the NET is conducted in a paper-based format.",5,Perfect - correctly handled negative information
+"What ACT score do I need for Natural Sciences programs?","ACT STEM Score with minimum score of 25","For Natural Sciences programs at NUST, you need an ACT STEM Score with a minimum of 25 to apply.",5,Perfect match - correct requirement

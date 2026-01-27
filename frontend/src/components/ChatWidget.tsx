@@ -269,6 +269,37 @@ const ChatWidget: React.FC<ChatWidgetOptions> = ({
     }
   }, [addErrorMessage, updateVoiceAudioLevel]);
 
+  const sendVoiceMessage = useCallback(async () => {
+    console.log("Sending voice message...", audioChunksRef.current.length);
+    if (audioChunksRef.current.length === 0) return;
+    
+    try {
+      setIsVoiceProcessing(true);
+      
+      // Create audio blob from chunks
+      const audioBlob = new Blob(audioChunksRef.current, {
+        type: voiceRecorderRef.current?.mimeType || 'audio/webm',
+      });
+      
+      console.log("Voice message blob size:", audioBlob.size);
+      
+      // Add user message indicator
+      addMessage("🎤 Voice message", "user");
+      
+      // Send the complete audio message
+      socketRef.current?.emit("voice_message", audioBlob);
+      
+      // Reset for next recording
+      audioChunksRef.current = [];
+      setVoiceRecordingTime(0);
+      
+    } catch (error) {
+      console.error("Error sending voice message:", error);
+      addErrorMessage("Failed to send voice message. Please try again.");
+      setIsVoiceProcessing(false);
+    }
+  }, [addMessage, addErrorMessage]);
+
   const stopVoiceRecording = useCallback(() => {
     console.log("Stopping voice recording...");
     
@@ -289,42 +320,13 @@ const ChatWidget: React.FC<ChatWidgetOptions> = ({
     setIsVoiceRecording(false);
     setAudioLevel(0);
     
-    console.log("Voice recording stopped successfully");
-  }, []);
-
-  const sendVoiceMessage = useCallback(async () => {
-    console.log("Sending voicesage...", audioChunksRef.current.length);
-    if (audioChunksRef.current.length === 0) return;
+    // Automatically send the voice message when recording stops
+    setTimeout(() => {
+      sendVoiceMessage();
+    }, 100); // Small delay to ensure recording is properly stopped
     
-    try {
-      setIsVoiceProcessing(true);
-      
-      // Create audio blob from chunks
-      const audioBlob = new Blob(audioChunksRef.current, {
-        type: voiceRecorderRef.current?.mimeType || 'audio/webm',
-      });
-      
-      console.log("Voice message blob size:", audioBlob.size);
-      
-      // Add user message indicator
-      addMessage("🎤 Voice message", "user");
-      
-      // Convert blob to array buffer and send
-      // const buffer = await audioBlob.arrayBuffer();
-      
-      // Send the complete audio message
-      socketRef.current?.emit("voice_message", audioBlob);
-      
-      // Reset for next recording
-      audioChunksRef.current = [];
-      setVoiceRecordingTime(0);
-      
-    } catch (error) {
-      console.error("Error sending voice message:", error);
-      addErrorMessage("Failed to send voice message. Please try again.");
-      setIsVoiceProcessing(false);
-    }
-  }, [addMessage, addErrorMessage]);
+    console.log("Voice recording stopped successfully");
+  }, [sendVoiceMessage]);
 
   const stopVoiceMode = useCallback(() => {
     console.log("Stopping voice mode...");
@@ -796,40 +798,12 @@ const ChatWidget: React.FC<ChatWidgetOptions> = ({
                       <div className="absolute inset-0 rounded-full border-2 border-red-300 animate-ping"></div>
                     )}
                   </button>
-
-                  {/* Send Button */}
-                  <button
-                    onClick={sendVoiceMessage}
-                    // disabled={isVoiceProcessing || audioChunksRef.current.length === 0}
-                    className={`relative group w-16 h-16 rounded-full transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-green-200 disabled:opacity-50 disabled:cursor-not-allowed ${
-                      audioChunksRef.current.length > 0 && !isVoiceProcessing
-                        ? 'bg-green-500 hover:bg-green-600 shadow-lg shadow-green-500/25 transform hover:scale-105 active:scale-95' 
-                        : 'bg-gray-400 cursor-not-allowed'
-                    }`}
-                    aria-label="Send voice message"
-                  >
-                    <div className="absolute inset-0 rounded-full bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
-                    {isVoiceProcessing ? (
-                      <div className="typing-indicator-small">
-                        <div className="typing-dot-small bg-white"></div>
-                        <div className="typing-dot-small bg-white"></div>
-                        <div className="typing-dot-small bg-white"></div>
-                      </div>
-                    ) : (
-                      <svg className="w-8 h-8 text-white mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                      </svg>
-                    )}
-                  </button>
                 </div>
 
                 {/* Button Labels */}
                 <div className="flex items-center justify-center space-x-20 mt-3">
                   <span className={`text-xs ${currentTheme.text} opacity-70`}>
                     {isVoiceRecording ? "Stop" : "Record"}
-                  </span>
-                  <span className={`text-xs ${currentTheme.text} opacity-70`}>
-                    Send
                   </span>
                 </div>
 
