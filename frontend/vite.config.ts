@@ -12,20 +12,20 @@ const __dirname = dirname(__filename);
 export default defineConfig({
   plugins: [react(),tailwindcss()],
   build: {
-    lib: {
-      entry: resolve(__dirname, 'src/widget.ts'),
-      name: 'ChatWidget',
-      fileName: 'chat-widget',
-      formats: ['iife'], 
-    },
-    rollupOptions: {
-      external: [], 
-      output: {
-        globals: {},
-        // Ensure the widget is self-contained
-        inlineDynamicImports: true,
-      },
-    },
+    // lib: {
+    //   entry: resolve(__dirname, 'src/widget.ts'),
+    //   name: 'ChatWidget',
+    //   fileName: 'chat-widget',
+    //   formats: ['iife'], 
+    // },
+    // rollupOptions: {
+    //   external: [], 
+    //   output: {
+    //     globals: {},
+    //     // Ensure the widget is self-contained
+    //     inlineDynamicImports: true,
+    //   },
+    // },
     // Optimize for production
     minify: 'terser',
     terserOptions: {
