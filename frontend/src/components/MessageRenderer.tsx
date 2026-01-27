@@ -140,7 +140,7 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({
         parts.push(
           <strong
             key={match.index}
-            className="font-semibold text-gray-900 dark:text-white"
+            className="font-semibold text-gray-800"
             style={{ 
               fontFamily: containsUrdu(boldText) ? 'Noto Sans Urdu, Arial, sans-serif' : 'inherit'
             }}
