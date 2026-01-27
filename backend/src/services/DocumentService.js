@@ -11,34 +11,34 @@ class DocumentService {
     this.vectorStore = VectorStore;
   }
 
-  async processPDF(filePath) {
+  async processPDF(filePath, options = {}) {
     try {
+      const { keepFile = false, sourceUrl = null } = options;
       const dataBuffer = fs.readFileSync(filePath);
       const pdfData = await pdf(dataBuffer);
       const chunks = this.splitIntoChunks(pdfData.text, 1000, 200);
+      
+      // Extract filename for better metadata
+      const fileName = filePath.split('/').pop();
+      
       const documentsWithMetadata = chunks.map((chunk, index) => ({
         content: chunk,
         metadata: {
           source: filePath,
+          title: fileName,
           type: "pdf",
           chunk_index: index,
           total_chunks: chunks.length,
-          source_url: "pdf",
+          source_url: sourceUrl || `pdf:${fileName}`,
         },
-        source_url: "pdf",
+        source_url: sourceUrl || `pdf:${fileName}`,
       }));
-      // source: currentUrl,
-      //           title: title,
-      //           type: "webpage",
-      //           chunk_index: index,
-      //           total_chunks: chunks.length,
-      //           scra
-      fs.unlinkSync(filePath);
-      // write to a file
-      // const outputFilePath = `data/processed_pdf_${Date.now()}.json`;
-      // fs.writeFileSync(outputFilePath, JSON.stringify(documentsWithMetadata, null, 2));
-      // console.log(`Processed PDF saved to ${outputFilePath}`);
-      // console.log(`Total chunks created: ${documentsWithMetadata.length}`);
+      
+      // Only delete if not keeping file
+      if (!keepFile) {
+        fs.unlinkSync(filePath);
+      }
+      
       await this.vectorStore.addDocuments(documentsWithMetadata);
       return documentsWithMetadata;
     } catch (error) {
