@@ -114,7 +114,7 @@ class ChatService {
       const stream = await this.openai.chat.completions.create({
         model: "gpt-4o",
         messages: messages,
-        temperature: 0.7,
+        temperature: 0.2, // Low temperature for consistent, factual responses
         max_tokens: 1000,
         stream: true,
       });
