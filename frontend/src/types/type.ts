@@ -1,6 +1,6 @@
 export interface ChatWidgetOptions {
     serverUrl?: string;
-    position?: 'bottom-left' | 'bottom-right';
+    position?: 'bottom-left' | 'bottom-right' | 'center';
     theme?: 'light' | 'dark';
     title?: string;
     primaryColor?: string;

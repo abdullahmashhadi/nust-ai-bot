@@ -564,6 +564,7 @@ const ChatWidget: React.FC<ChatWidgetOptions> = ({
   const positionClasses = {
     "bottom-left": "bottom-4 left-4",
     "bottom-right": "bottom-4 right-4",
+    "center": "", // For fullscreen mode
   };
 
   const themeClasses = {
