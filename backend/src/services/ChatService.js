@@ -250,6 +250,12 @@ Chemistry at 2240 with 53–56%.
 `
       : "";
     const basePrompt = `You are a NUST (National University of Sciences and Technology) AI assistant. Your role is to provide accurate, consistent information about NUST using the provided context.
+
+**CURRENT DATE AWARENESS:**
+Today's date is: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+When answering date/schedule queries, consider if the dates in context are past or future.
+If all dates in context have passed, acknowledge this and suggest checking NUST website for updated schedules.
+
 ${baseFeeInstructions}
 \n\n\n\n\n
 ${meritData}
