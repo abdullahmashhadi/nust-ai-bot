@@ -1,3 +1,31 @@
 .env
 node_modules/
 dist/
+./website_pages
+
+# Python
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist-python/
+build/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Project-specific
+qna.csv
+website_pages/
+performance_charts/
+generate_performance_charts.py
+
+# OS
+.DS_Store
+Thumbs.db
