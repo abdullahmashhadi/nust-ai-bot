@@ -47,6 +47,7 @@ io.on("connection", (socket) => {
       
       const stream = await chatService.streamResponse(message, conversationId, isVoice);
 
+      let queryId = null;
       for await (const chunk of stream) {
         socket.emit("chat_stream", {
           type: "chunk",
@@ -56,10 +57,14 @@ io.on("connection", (socket) => {
         });
       }
 
+      // Get queryId from the stream's return value
+      queryId = await stream.return();
+
       socket.emit("chat_stream", {
         type: "end",
         conversationId,
         streamingId: streamingId || null,
+        queryId: queryId?.value || null,
       });
     } catch (error) {
       console.error("Chat error:", error);

@@ -13,11 +13,14 @@ export interface Message {
   timestamp: Date;
   isStreaming?: boolean;
   isError?: boolean;
+  queryId?: string;
+  feedback?: 'positive' | 'negative' | 'neutral';
 }
 
 export interface StreamData {
   type: 'chunk' | 'end';
   content?: string;
   conversationId?: string;
-  streamingId?:string;
+  streamingId?: string;
+  queryId?: string;
 }

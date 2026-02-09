@@ -3,11 +3,17 @@ import React from "react";
 interface MessageRendererProps {
   content: string;
   isUser?: boolean;
+  onFeedback?: (feedback: 'positive' | 'negative') => void;
+  feedback?: 'positive' | 'negative' | 'neutral';
+  showFeedback?: boolean;
 }
 
 const MessageRenderer: React.FC<MessageRendererProps> = ({
   content,
   isUser = false,
+  onFeedback,
+  feedback,
+  showFeedback = false,
 }) => {
   // Function to detect if text contains Urdu/Arabic characters
   const containsUrdu = (text: string) => {
@@ -194,7 +200,42 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({
   };
 
   return (
-    <div className="formatted-message">{renderFormattedContent(content)}</div>
+    <div>
+      <div className="formatted-message">{renderFormattedContent(content)}</div>
+      
+      {showFeedback && !isUser && onFeedback && (
+        <div className="flex items-center gap-2 mt-2">
+          <button
+            onClick={() => onFeedback('positive')}
+            disabled={feedback === 'positive'}
+            className={`p-1.5 rounded transition-colors ${
+              feedback === 'positive'
+                ? 'bg-green-100 text-green-600'
+                : 'hover:bg-gray-100 text-gray-500 hover:text-green-600'
+            }`}
+            title="Helpful"
+          >
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z" />
+            </svg>
+          </button>
+          <button
+            onClick={() => onFeedback('negative')}
+            disabled={feedback === 'negative'}
+            className={`p-1.5 rounded transition-colors ${
+              feedback === 'negative'
+                ? 'bg-red-100 text-red-600'
+                : 'hover:bg-gray-100 text-gray-500 hover:text-red-600'
+            }`}
+            title="Not helpful"
+          >
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M18 9.5a1.5 1.5 0 11-3 0v-6a1.5 1.5 0 013 0v6zM14 9.667v-5.43a2 2 0 00-1.105-1.79l-.05-.025A4 4 0 0011.055 2H5.64a2 2 0 00-1.962 1.608l-1.2 6A2 2 0 004.44 12H8v4a2 2 0 002 2 1 1 0 001-1v-.667a4 4 0 01.8-2.4l1.4-1.866a4 4 0 00.8-2.4z" />
+            </svg>
+          </button>
+        </div>
+      )}
+    </div>
   );
 };
 

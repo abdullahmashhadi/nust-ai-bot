@@ -131,6 +131,31 @@ const ChatWidget: React.FC<ChatWidgetOptions> = ({
     addMessage(text, "bot", false, true);
   }, []);
 
+  const handleFeedback = useCallback(async (messageId: string, feedback: 'positive' | 'negative') => {
+    const message = messages.find(m => m.id === messageId);
+    if (!message?.queryId) {
+      console.error('No queryId found for message');
+      return;
+    }
+
+    try {
+      const response = await fetch(`${serverUrl}/api/feedback`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ queryId: message.queryId, feedback })
+      });
+
+      if (response.ok) {
+        setMessages(prev => prev.map(msg =>
+          msg.id === messageId ? { ...msg, feedback } : msg
+        ));
+        console.log(`✅ Feedback sent: ${feedback}`);
+      }
+    } catch (error) {
+      console.error('Failed to send feedback:', error);
+    }
+  }, [messages, serverUrl]);
+
   const handleStreamChunk = useCallback((data: StreamData) => {
     console.log(`Received stream data:`, data);
     if (data.type == "chunk" && data.streamingId) {
@@ -144,7 +169,9 @@ const ChatWidget: React.FC<ChatWidgetOptions> = ({
     } else if (data.type === "end") {
       setMessages((prev) =>
         prev.map((msg) =>
-          msg.id === data.streamingId ? { ...msg, isStreaming: false } : msg
+          msg.id === data.streamingId 
+            ? { ...msg, isStreaming: false, queryId: data.queryId } 
+            : msg
         )
       );
       resetInput();
@@ -829,7 +856,13 @@ const ChatWidget: React.FC<ChatWidgetOptions> = ({
                                   Error
                                 </div>
                               )}
-                              <MessageRenderer content={message.text} isUser={false} />
+                              <MessageRenderer 
+                                content={message.text} 
+                                isUser={false}
+                                showFeedback={!message.isStreaming && !message.isError && !!message.queryId}
+                                feedback={message.feedback}
+                                onFeedback={(feedback) => handleFeedback(message.id, feedback)}
+                              />
                               {message.isStreaming && (
                                 <div className="mt-2 inline-flex items-center gap-1">
                                   <div className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce"></div>

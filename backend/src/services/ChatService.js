@@ -2,6 +2,7 @@ const { OpenAI } = require("openai");
 const { VectorStore } = require("./vectoreStore");
 const { AdvancedRAG } = require("./AdvancedRAG");
 const { correctTranscript, logCorrection } = require("../utils/transcriptionCorrection");
+const { QueryLogger } = require("./QueryLogger");
 const axios = require("axios");
 const FormData = require("form-data");
 
@@ -145,6 +146,7 @@ class ChatService {
 
   async *wrapGeneratorWithSave(generator, conversation, conversationId) {
     let fullResponse = "";
+    const userMessage = conversation[conversation.length - 1]?.content || "";
 
     for await (const chunk of generator) {
       fullResponse += chunk;
@@ -153,6 +155,19 @@ class ChatService {
 
     conversation.push({ role: "assistant", content: fullResponse });
     this.conversations.set(conversationId, conversation);
+
+    // Log the query-response pair and return queryId
+    let queryId = null;
+    if (userMessage && fullResponse) {
+      const logResult = await QueryLogger.logQuery(conversationId, userMessage, fullResponse, {
+        model: 'gpt-4o',
+        rag_mode: this.useAdvancedRAG ? this.ragMode : 'naive'
+      });
+      queryId = logResult?.id || null;
+    }
+
+    // Return queryId so it can be sent to client
+    return queryId;
   }
 
   buildSystemPrompt(context, isVoice, isFeeQuery = false) {

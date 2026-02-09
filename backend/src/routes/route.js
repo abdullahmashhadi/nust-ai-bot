@@ -7,6 +7,7 @@ const {
 } = require("../controller/scraping.js");
 const { RAGEvaluator } = require("../services/RAGEvaluator.js");
 const { AdvancedRAG } = require("../services/AdvancedRAG.js");
+const { QueryLogger } = require("../services/QueryLogger.js");
 const multer = require("multer");
 
 const evaluator = new RAGEvaluator();
@@ -86,6 +87,48 @@ router.get("/recent-evaluations", (req, res) => {
   } catch (error) {
     console.error("Recent evaluations error:", error);
     res.status(500).json({ error: "Failed to get recent evaluations" });
+  }
+});
+
+// Query Logging and Feedback endpoints
+router.post("/feedback", async (req, res) => {
+  try {
+    const { queryId, feedback } = req.body;
+
+    if (!queryId || !feedback) {
+      return res.status(400).json({ error: "queryId and feedback are required" });
+    }
+
+    if (!['positive', 'negative', 'neutral'].includes(feedback)) {
+      return res.status(400).json({ error: "Invalid feedback value" });
+    }
+
+    const result = await QueryLogger.updateFeedback(queryId, feedback);
+    res.json({ success: true, data: result });
+  } catch (error) {
+    console.error("Feedback error:", error);
+    res.status(500).json({ error: "Failed to update feedback" });
+  }
+});
+
+router.get("/feedback-stats", async (req, res) => {
+  try {
+    const stats = await QueryLogger.getFeedbackStats();
+    res.json(stats);
+  } catch (error) {
+    console.error("Feedback stats error:", error);
+    res.status(500).json({ error: "Failed to get feedback stats" });
+  }
+});
+
+router.get("/queries-for-kb", async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 20;
+    const queries = await QueryLogger.getQueriesForKnowledgeBase(limit);
+    res.json(queries);
+  } catch (error) {
+    console.error("Get queries for KB error:", error);
+    res.status(500).json({ error: "Failed to get queries" });
   }
 });
 
