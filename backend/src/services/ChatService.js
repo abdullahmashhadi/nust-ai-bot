@@ -14,6 +14,7 @@ class ChatService {
     this.vectorStore = VectorStore;
     this.advancedRAG = new AdvancedRAG();
     this.conversations = new Map();
+    this.queryIds = new Map(); // Store queryId for each conversation
 
     // Toggle between naive and advanced RAG
     this.useAdvancedRAG = process.env.USE_ADVANCED_RAG !== "false"; // Default to true
@@ -156,18 +157,19 @@ class ChatService {
     conversation.push({ role: "assistant", content: fullResponse });
     this.conversations.set(conversationId, conversation);
 
-    // Log the query-response pair and return queryId
-    let queryId = null;
+    // Log the query-response pair and store queryId
     if (userMessage && fullResponse) {
       const logResult = await QueryLogger.logQuery(conversationId, userMessage, fullResponse, {
         model: 'gpt-4o',
         rag_mode: this.useAdvancedRAG ? this.ragMode : 'naive'
       });
-      queryId = logResult?.id || null;
+      const queryId = logResult?.id || null;
+      this.queryIds.set(conversationId, queryId);
     }
+  }
 
-    // Return queryId so it can be sent to client
-    return queryId;
+  getLastQueryId(conversationId) {
+    return this.queryIds.get(conversationId) || null;
   }
 
   buildSystemPrompt(context, isVoice, isFeeQuery = false) {
