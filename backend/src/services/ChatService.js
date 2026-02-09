@@ -1,6 +1,7 @@
 const { OpenAI } = require("openai");
 const { VectorStore } = require("./vectoreStore");
 const { AdvancedRAG } = require("./AdvancedRAG");
+const { correctTranscript, logCorrection } = require("../utils/transcriptionCorrection");
 const axios = require("axios");
 const FormData = require("form-data");
 
@@ -462,7 +463,13 @@ No Info: "Swimming pool timings" → "I don't have specific pool timings. Check 
       );
 
       console.log("Transcription response:", response.data);
-      return response.data.text;
+      const rawTranscript = response.data.text;
+      
+      // Apply full correction pipeline (dictionary + LLM)
+      const correctedTranscript = await correctTranscript(rawTranscript);
+      logCorrection(rawTranscript, correctedTranscript);
+      
+      return correctedTranscript;
     } catch (error) {
       console.error("Transcription error details:", {
         message: error.message,

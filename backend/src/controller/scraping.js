@@ -3,6 +3,7 @@ const { startScraping } = require("../services/bgService.js");
 const { DocumentService } = require("../services/DocumentService.js");
 const { VectorStore } = require("../services/vectoreStore.js");
 const { createClient } = require("@deepgram/sdk");
+const { correctTranscript, logCorrection } = require("../utils/transcriptionCorrection");
 const fs = require("fs");
 
 const axios = require("axios");
@@ -81,6 +82,24 @@ const transcribeAudio = async (req, res) => {
       {
         model: 'nova-2',
         smart_format: true,
+        keywords: [
+          'SEECS:3',
+          'ASAB:3',
+          'NBC:3',
+          'PNEC:3',
+          'SMME:3',
+          'SCME:3',
+          'SCEE:3',
+          'CAE:3',
+          'MCS:3',
+          'SADA:3',
+          'NBS:3',
+          'SNS:3',
+          'CoEME:3',
+          'S3H:3',
+          'NUST:3',
+          'NET:3'
+        ]
       }
     );
     
@@ -96,10 +115,15 @@ const transcribeAudio = async (req, res) => {
       return res.status(400).json({ error: 'No transcript generated' });
     }
     
-    const transcript = result.results.channels[0].alternatives[0].transcript;
-    console.log('Transcription successful:', transcript);
+    const rawTranscript = result.results.channels[0].alternatives[0].transcript;
     
-    res.json({ text: transcript });
+    // Apply full correction pipeline (dictionary + LLM)
+    const correctedTranscript = await correctTranscript(rawTranscript);
+    logCorrection(rawTranscript, correctedTranscript);
+    
+    console.log('Transcription successful:', correctedTranscript);
+    
+    res.json({ text: correctedTranscript });
   } catch (error) {
     console.error('Transcription error:', error);
     
