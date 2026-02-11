@@ -859,6 +859,7 @@ const ChatWidget: React.FC<ChatWidgetOptions> = ({
                               <MessageRenderer 
                                 content={message.text} 
                                 isUser={false}
+                                isStreaming={message.isStreaming}
                                 showFeedback={!message.isStreaming && !message.isError && !!message.queryId}
                                 feedback={message.feedback}
                                 onFeedback={(feedback) => handleFeedback(message.id, feedback)}

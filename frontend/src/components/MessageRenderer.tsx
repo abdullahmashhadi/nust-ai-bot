@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 
 interface MessageRendererProps {
   content: string;
@@ -6,6 +6,8 @@ interface MessageRendererProps {
   onFeedback?: (feedback: 'positive' | 'negative') => void;
   feedback?: 'positive' | 'negative' | 'neutral';
   showFeedback?: boolean;
+  onCopy?: () => void;
+  isStreaming?: boolean;
 }
 
 const MessageRenderer: React.FC<MessageRendererProps> = ({
@@ -14,7 +16,22 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({
   onFeedback,
   feedback,
   showFeedback = false,
+  onCopy,
+  isStreaming = false,
 }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopied(true);
+      onCopy?.();
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
   // Function to detect if text contains Urdu/Arabic characters
   const containsUrdu = (text: string) => {
     const urduRegex = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]/;
@@ -203,36 +220,63 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({
     <div>
       <div className="formatted-message">{renderFormattedContent(content)}</div>
       
-      {showFeedback && !isUser && onFeedback && (
+      {!isUser && !isStreaming && (
         <div className="flex items-center gap-2 mt-2">
+          {/* Copy button - show when response is complete */}
           <button
-            onClick={() => onFeedback('positive')}
-            disabled={feedback === 'positive'}
+            onClick={handleCopy}
             className={`p-1.5 rounded transition-colors ${
-              feedback === 'positive'
-                ? 'bg-green-100 text-green-600'
-                : 'hover:bg-gray-100 text-gray-500 hover:text-green-600'
+              copied
+                ? 'bg-blue-100 text-blue-600'
+                : 'hover:bg-gray-100 text-gray-500 hover:text-blue-600'
             }`}
-            title="Helpful"
+            title={copied ? 'Copied!' : 'Copy to clipboard'}
           >
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z" />
-            </svg>
+            {copied ? (
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+            ) : (
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+                <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
+              </svg>
+            )}
           </button>
-          <button
-            onClick={() => onFeedback('negative')}
-            disabled={feedback === 'negative'}
-            className={`p-1.5 rounded transition-colors ${
-              feedback === 'negative'
-                ? 'bg-red-100 text-red-600'
-                : 'hover:bg-gray-100 text-gray-500 hover:text-red-600'
-            }`}
-            title="Not helpful"
-          >
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M18 9.5a1.5 1.5 0 11-3 0v-6a1.5 1.5 0 013 0v6zM14 9.667v-5.43a2 2 0 00-1.105-1.79l-.05-.025A4 4 0 0011.055 2H5.64a2 2 0 00-1.962 1.608l-1.2 6A2 2 0 004.44 12H8v4a2 2 0 002 2 1 1 0 001-1v-.667a4 4 0 01.8-2.4l1.4-1.866a4 4 0 00.8-2.4z" />
-            </svg>
-          </button>
+
+          {/* Feedback buttons - only show when queryId exists */}
+          {showFeedback && onFeedback && (
+            <>
+              <button
+                onClick={() => onFeedback('positive')}
+                disabled={feedback === 'positive'}
+                className={`p-1.5 rounded transition-colors ${
+                  feedback === 'positive'
+                    ? 'bg-green-100 text-green-600'
+                    : 'hover:bg-gray-100 text-gray-500 hover:text-green-600'
+                }`}
+                title="Helpful"
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z" />
+                </svg>
+              </button>
+              <button
+                onClick={() => onFeedback('negative')}
+                disabled={feedback === 'negative'}
+                className={`p-1.5 rounded transition-colors ${
+                  feedback === 'negative'
+                    ? 'bg-red-100 text-red-600'
+                    : 'hover:bg-gray-100 text-gray-500 hover:text-red-600'
+                }`}
+                title="Not helpful"
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M18 9.5a1.5 1.5 0 11-3 0v-6a1.5 1.5 0 013 0v6zM14 9.667v-5.43a2 2 0 00-1.105-1.79l-.05-.025A4 4 0 0011.055 2H5.64a2 2 0 00-1.962 1.608l-1.2 6A2 2 0 004.44 12H8v4a2 2 0 002 2 1 1 0 001-1v-.667a4 4 0 01.8-2.4l1.4-1.866a4 4 0 00.8-2.4z" />
+                </svg>
+              </button>
+            </>
+          )}
         </div>
       )}
     </div>

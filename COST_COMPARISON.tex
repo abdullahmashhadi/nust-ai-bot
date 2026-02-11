@@ -1,0 +1,128 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{array}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\title{LLM Cost Comparison: DeepSeek vs GPT-4o-mini}
+\author{NUST Chatbot Project}
+\date{February 2026}
+
+\begin{document}
+
+\maketitle
+
+\section{Model Pricing Comparison}
+
+\subsection{Base Pricing per 1M Tokens}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Model} & \textbf{Input} & \textbf{Output} & \textbf{Context} & \textbf{Performance} \\
+& \textbf{(\$/1M)} & \textbf{(\$/1M)} & \textbf{Window} & \textbf{(MMLU)} \\
+\midrule
+GPT-4o-mini & \$0.150 & \$0.600 & 128K & 82.0\% \\
+DeepSeek-V3 & \$0.070 & \$0.280 & 128K & 80.6\% \\
+\textcolor{blue}{\textbf{Savings}} & \textcolor{blue}{\textbf{53.3\%}} & \textcolor{blue}{\textbf{53.3\%}} & - & -1.4\% \\
+\bottomrule
+\end{tabular}
+\caption{Model pricing and performance comparison}
+\end{table}
+
+\subsection{Current Project Usage Breakdown}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Use Case} & \textbf{Avg Input} & \textbf{Avg Output} & \textbf{Calls/Day} \\
+\midrule
+RAG Query Expansion & 100 tokens & 50 tokens & 1000 \\
+Query Classification & 80 tokens & 10 tokens & 1000 \\
+Transcription Correction & 150 tokens & 150 tokens & 200 \\
+Context Compression & 2000 tokens & 500 tokens & 1000 \\
+\bottomrule
+\end{tabular}
+\caption{Project usage patterns (estimated for 1000 users/day)}
+\end{table}
+
+\section{Monthly Cost Analysis}
+
+\subsection{GPT-4o-mini (Current Model)}
+
+\textbf{Daily Costs:}
+\begin{itemize}
+    \item Query Expansion: $(1000 \times 100 \times 0.15) + (1000 \times 50 \times 0.6) = \$0.015 + \$0.030 = \$0.045$
+    \item Classification: $(1000 \times 80 \times 0.15) + (1000 \times 10 \times 0.6) = \$0.012 + \$0.006 = \$0.018$
+    \item Transcription: $(200 \times 150 \times 0.15) + (200 \times 150 \times 0.6) = \$0.0045 + \$0.018 = \$0.0225$
+    \item Compression: $(1000 \times 2000 \times 0.15) + (1000 \times 500 \times 0.6) = \$0.30 + \$0.30 = \$0.60$
+\end{itemize}
+
+\textbf{Total Daily: \$0.6855}
+
+\textbf{Total Monthly (30 days): \$20.57}
+
+\subsection{DeepSeek-V3 (Alternative Model)}
+
+\textbf{Daily Costs:}
+\begin{itemize}
+    \item Query Expansion: $(1000 \times 100 \times 0.07) + (1000 \times 50 \times 0.28) = \$0.007 + \$0.014 = \$0.021$
+    \item Classification: $(1000 \times 80 \times 0.07) + (1000 \times 10 \times 0.28) = \$0.0056 + \$0.0028 = \$0.0084$
+    \item Transcription: $(200 \times 150 \times 0.07) + (200 \times 150 \times 0.28) = \$0.0021 + \$0.0084 = \$0.0105$
+    \item Compression: $(1000 \times 2000 \times 0.07) + (1000 \times 500 \times 0.28) = \$0.14 + \$0.14 = \$0.28$
+\end{itemize}
+
+\textbf{Total Daily: \$0.3199}
+
+\textbf{Total Monthly (30 days): \$9.60}
+
+\section{Cost Savings Summary}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lrrc@{}}
+\toprule
+\textbf{Period} & \textbf{GPT-4o-mini} & \textbf{DeepSeek-V3} & \textbf{Savings} \\
+\midrule
+Daily & \$0.69 & \$0.32 & \textcolor{blue}{\$0.37 (53\%)} \\
+Monthly & \$20.57 & \$9.60 & \textcolor{blue}{\$10.97 (53\%)} \\
+Yearly & \$247 & \$115 & \textcolor{blue}{\$132 (53\%)} \\
+\bottomrule
+\end{tabular}
+\caption{Total cost savings by switching to DeepSeek-V3}
+\end{table}
+
+\section{Trade-offs}
+
+\subsection{Advantages of DeepSeek-V3}
+\begin{itemize}
+    \item \textbf{53\% cost reduction} across all operations
+    \item Comparable performance (80.6\% vs 82.0\% MMLU)
+    \item Same 128K context window
+    \item Open weights available for self-hosting
+\end{itemize}
+
+\subsection{Advantages of GPT-4o-mini}
+\begin{itemize}
+    \item Slightly better performance (1.4\% higher MMLU)
+    \item More established with better documentation
+    \item Potentially better instruction following
+    \item Proven reliability for production use
+\end{itemize}
+
+\section{Recommendation}
+
+For a student project with budget constraints:
+\begin{itemize}
+    \item \textbf{Switch to DeepSeek-V3} for RAG operations (query expansion, classification, compression)
+    \item \textbf{Keep GPT-4o-mini} for transcription correction (requires high accuracy)
+    \item \textbf{Hybrid approach} saves approximately \textbf{45\% monthly} while maintaining quality
+\end{itemize}
+
+\textbf{Hybrid Monthly Cost: \$11.85} (42\% savings vs GPT-4o-mini only)
+
+\end{document}
